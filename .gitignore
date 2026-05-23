@@ -1,0 +1,19 @@
+# Rust
+target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Node / CDK
+node_modules/
+cdk.out/
+*.tsbuildinfo
+
+# AWS / 認証情報
+.env
+.env.local
+*.pem
+
+# OS / Editor
+.DS_Store
+.idea/
+.vscode/
