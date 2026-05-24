@@ -67,7 +67,7 @@ export class MonitoringStack extends cdk.Stack {
     );
 
     new events.Rule(this, "MonitorSchedule", {
-      schedule: events.Schedule.rate(cdk.Duration.minutes(10)),
+      schedule: events.Schedule.rate(cdk.Duration.minutes(5)),
       targets: [new targets.LambdaFunction(fn, { retryAttempts: 0 })],
     });
   }
