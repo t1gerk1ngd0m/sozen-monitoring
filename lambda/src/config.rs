@@ -9,12 +9,14 @@ pub struct Config {
   pub user_agent: String,
   pub discord_webhook_url: Option<String>,
   pub slack_webhook_url: Option<String>,
+  pub cf_clearance: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct Webhooks {
   discord: Option<String>,
   slack: Option<String>,
+  cf_clearance: Option<String>,
 }
 
 impl Config {
@@ -29,6 +31,7 @@ impl Config {
       user_agent: Self::env_var("USER_AGENT")?,
       discord_webhook_url: webhooks.discord,
       slack_webhook_url: webhooks.slack,
+      cf_clearance: webhooks.cf_clearance,
     })
   }
 

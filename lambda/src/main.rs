@@ -13,7 +13,7 @@ use lambda_runtime::{service_fn, Error, LambdaEvent};
 use crate::config::Config;
 
 pub struct Deps {
-  pub http: reqwest::Client,
+  pub http: wreq::Client,
   pub ses: aws_sdk_sesv2::Client,
 }
 
@@ -34,12 +34,13 @@ async fn main() -> Result<(), Error> {
   let cfg = Config::load(&ssm).await.context("load config")?;
 
   let deps = Deps {
-    http: reqwest::Client::builder()
+    http: wreq::Client::builder()
+      .emulation(wreq_util::Emulation::Chrome137)
       .connect_timeout(Duration::from_secs(5))
       .timeout(Duration::from_secs(15))
-      .user_agent(cfg.user_agent.clone())
+      .cookie_store(true)
       .build()
-      .context("build reqwest client")?,
+      .context("build rquest client")?,
     ses: aws_sdk_sesv2::Client::new(&aws_cfg),
   };
 

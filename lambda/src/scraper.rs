@@ -3,16 +3,23 @@ use scraper::{Html, Selector};
 
 use crate::model::Slot;
 
-pub async fn fetch_html(client: &reqwest::Client, url: &str) -> Result<String> {
-  let res = client
-    .get(url)
+pub async fn fetch_html(
+  client: &wreq::Client,
+  url: &str,
+  cf_clearance: Option<&str>,
+) -> Result<String> {
+  let mut req = client.get(url);
+  if let Some(clearance) = cf_clearance {
+    req = req.header("Cookie", format!("cf_clearance={clearance}"));
+  }
+
+  let res = req
     .send()
     .await
     .with_context(|| format!("GET {url} failed"))?
     .error_for_status()
     .with_context(|| format!("non-2xx response from {url}"))?;
-
-  res.text().await.context("failed to read response body")
+  res.text().await.context("read response body")
 }
 
 pub fn parse_slots(html: &str) -> Result<Vec<Slot>> {
@@ -37,11 +44,13 @@ pub fn parse_slots(html: &str) -> Result<Vec<Slot>> {
       .unwrap_or("")
       .trim()
       .to_string();
-    let label = el.value().attr("data-label").map(|s| s.to_string());
-
+    if date.is_empty() || time.is_empty() {
+      continue;
+    }
+    let label_text: String = el.text().collect::<String>().trim().to_string();
+    let label = (!label_text.is_empty()).then_some(label_text);
     slots.push(Slot { date, time, label });
   }
-
   Ok(slots)
 }
 
@@ -65,16 +74,8 @@ mod tests {
 
   #[test]
   fn parses_three_slots() {
-    let slots = parse_slots(SAMPLE_HTML).expect(
-      "should 
-  parse",
-    );
-    assert_eq!(
-      slots.len(),
-      3,
-      "div.slot with date+time が 3 
-  件"
-    );
+    let slots = parse_slots(SAMPLE_HTML).expect("should parse");
+    assert_eq!(slots.len(), 3, "div.slot with date+time が 3 件");
 
     assert_eq!(slots[0].date, "2026-05-25");
     assert_eq!(slots[0].time, "14:00");
@@ -88,8 +89,7 @@ mod tests {
 
   #[test]
   fn ignores_unrelated_html() {
-    let html = "<html><body><p>nothing 
-  here</p></body></html>";
+    let html = "<html><body><p>nothing here</p></body></html>";
     let slots = parse_slots(html).expect("should parse");
     assert!(slots.is_empty());
   }

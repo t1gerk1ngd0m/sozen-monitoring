@@ -8,7 +8,7 @@ use crate::scraper;
 use crate::Deps;
 
 pub async fn run(cfg: &Config, deps: &Deps) -> Result<()> {
-  let html = scraper::fetch_html(&deps.http, &cfg.target_url).await?;
+  let html = scraper::fetch_html(&deps.http, &cfg.target_url, cfg.cf_clearance.as_deref()).await?;
   let slots = scraper::parse_slots(&html)?;
   tracing::info!(count = slots.len(), "parsed slots");
 

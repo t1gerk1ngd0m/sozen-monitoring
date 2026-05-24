@@ -13,7 +13,7 @@ struct SlackPayload<'a> {
   text: &'a str,
 }
 
-pub async fn post_discord(client: &reqwest::Client, url: &str, slots: &[Slot]) -> Result<()> {
+pub async fn post_discord(client: &wreq::Client, url: &str, slots: &[Slot]) -> Result<()> {
   let text = render(slots);
   client
     .post(url)
@@ -26,7 +26,7 @@ pub async fn post_discord(client: &reqwest::Client, url: &str, slots: &[Slot]) -
   Ok(())
 }
 
-pub async fn post_slack(client: &reqwest::Client, url: &str, slots: &[Slot]) -> Result<()> {
+pub async fn post_slack(client: &wreq::Client, url: &str, slots: &[Slot]) -> Result<()> {
   let text = render(slots);
   client
     .post(url)
