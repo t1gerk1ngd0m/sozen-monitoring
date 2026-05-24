@@ -1,7 +1,8 @@
 use crate::model::MenuItem;
 
 /// 「空きあり」と判定するロジック。
-/// 現状ページは menu__item が 2 件。3 件以上に増えたら空きありとみなす。
-pub fn has_availability(items: &[MenuItem]) -> bool {
-  items.len() > 2
+/// threshold より多い件数の menu__item があれば空きありとみなす。
+/// 例: threshold=2 なら 3 件以上で true。
+pub fn has_availability(items: &[MenuItem], threshold: usize) -> bool {
+  items.len() > threshold
 }

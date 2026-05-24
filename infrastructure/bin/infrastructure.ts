@@ -29,4 +29,5 @@ new MonitoringStack(app, "SozenMonitoringStack", {
   emailTo,
   userAgent: "sozen-monitor/0.1 (+contact: )",
   webhookParamName: "/sozen-monitor/webhooks",
+  availabilityThreshold: process.env.AVAILABILITY_THRESHOLD ?? "2",
 });

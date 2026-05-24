@@ -13,7 +13,7 @@ pub async fn run(cfg: &Config, deps: &Deps) -> Result<()> {
   let items = scraper::parse_items(&html)?;
   tracing::info!(count = items.len(), "parsed menu items");
 
-  if !availability::has_availability(&items) {
+  if !availability::has_availability(&items, cfg.availability_threshold) {
     tracing::info!("no availability — skip notify");
     return Ok(());
   }

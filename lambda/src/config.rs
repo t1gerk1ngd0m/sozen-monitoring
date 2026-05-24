@@ -7,6 +7,7 @@ pub struct Config {
   pub email_from: String,
   pub email_to: String,
   pub user_agent: String,
+  pub availability_threshold: usize,
   pub discord_webhook_url: Option<String>,
   pub slack_webhook_url: Option<String>,
   pub cf_clearance: Option<String>,
@@ -24,11 +25,16 @@ impl Config {
     let webhook_param_name = Self::env_var("WEBHOOK_PARAM_NAME")?;
     let webhooks = Self::fetch_webhooks(ssm, &webhook_param_name).await?;
 
+    let availability_threshold = Self::env_var("AVAILABILITY_THRESHOLD")?
+      .parse::<usize>()
+      .context("AVAILABILITY_THRESHOLD must be a non-negative integer")?;
+
     Ok(Self {
       target_url: Self::env_var("TARGET_URL")?,
       email_from: Self::env_var("EMAIL_FROM")?,
       email_to: Self::env_var("EMAIL_TO")?,
       user_agent: Self::env_var("USER_AGENT")?,
+      availability_threshold,
       discord_webhook_url: webhooks.discord,
       slack_webhook_url: webhooks.slack,
       cf_clearance: webhooks.cf_clearance,
