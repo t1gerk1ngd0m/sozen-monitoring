@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use scraper::{Html, Selector};
 
-use crate::model::Slot;
+use crate::model::MenuItem;
 
 pub async fn fetch_html(
   client: &wreq::Client,
@@ -22,75 +22,48 @@ pub async fn fetch_html(
   res.text().await.context("read response body")
 }
 
-pub fn parse_slots(html: &str) -> Result<Vec<Slot>> {
+pub fn parse_items(html: &str) -> Result<Vec<MenuItem>> {
   let doc = Html::parse_document(html);
 
-  // TODO: 対象サイトの HTML 構造に合わせて selector を書き換える
-  // 想定: <div class="slot" data-date="2026-05-25" data-time="14:00">担当者名</div>
-  let slot_sel =
-    Selector::parse("div.slot").map_err(|e| anyhow::anyhow!("invalid selector: {e}"))?;
+  let item_sel = Selector::parse("ul.menu__list li.menu__item.change-color__mouseover__bg")
+    .map_err(|e| anyhow::anyhow!("invalid item selector: {e:?}"))?;
+  let title_sel = Selector::parse(".menu__info__title")
+    .map_err(|e| anyhow::anyhow!("invalid title selector: {e:?}"))?;
 
-  let mut slots = Vec::new();
-  for el in doc.select(&slot_sel) {
-    let date = el
-      .value()
-      .attr("data-date")
-      .unwrap_or("")
-      .trim()
-      .to_string();
-    let time = el
-      .value()
-      .attr("data-time")
-      .unwrap_or("")
-      .trim()
-      .to_string();
-    if date.is_empty() || time.is_empty() {
-      continue;
-    }
-    let label_text: String = el.text().collect::<String>().trim().to_string();
-    let label = (!label_text.is_empty()).then_some(label_text);
-    slots.push(Slot { date, time, label });
+  let mut items = Vec::new();
+  for el in doc.select(&item_sel) {
+    let title = el
+      .select(&title_sel)
+      .next()
+      .map(|t| t.text().collect::<String>().trim().to_string())
+      .unwrap_or_default();
+    items.push(MenuItem { title });
   }
-  Ok(slots)
+  Ok(items)
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
 
-  const SAMPLE_HTML: &str = r#"
-  <!DOCTYPE html>
-  <html><body>
-    <div class="slot" data-date="2026-05-25" 
-  data-time="14:00">院長</div>
-    <div class="slot" data-date="2026-05-25" 
-  data-time="15:30"></div>
-    <div class="slot" data-date="2026-05-26" 
-  data-time="10:00">副院長</div>
-    <div class="other">ノイズ</div>
-    <div class="slot">日付欠落で無視されるはず</div>
-  </body></html>
-  "#;
-
   #[test]
-  fn parses_three_slots() {
-    let slots = parse_slots(SAMPLE_HTML).expect("should parse");
-    assert_eq!(slots.len(), 3, "div.slot with date+time が 3 件");
-
-    assert_eq!(slots[0].date, "2026-05-25");
-    assert_eq!(slots[0].time, "14:00");
-    assert_eq!(slots[0].label.as_deref(), Some("院長"));
-
-    assert_eq!(slots[1].label, None, "空テキストは None");
-
-    assert_eq!(slots[2].date, "2026-05-26");
-    assert_eq!(slots[2].label.as_deref(), Some("副院長"));
+  fn parses_real_page_fixture() {
+    let html = include_str!("../tests/fixtures/sample_page.html");
+    let items = parse_items(html).expect("should parse");
+    assert_eq!(items.len(), 2, "現状ページの menu__item は 2 件のはず");
+    for item in &items {
+      assert!(!item.title.is_empty(), "title は非空");
+      assert!(
+        item.title.contains("鍼"),
+        "タイトルに「鍼」が含まれる: {}",
+        item.title
+      );
+    }
   }
 
   #[test]
-  fn ignores_unrelated_html() {
-    let html = "<html><body><p>nothing here</p></body></html>";
-    let slots = parse_slots(html).expect("should parse");
-    assert!(slots.is_empty());
+  fn empty_html_returns_zero_items() {
+    let items = parse_items("<html><body></body></html>").expect("should parse");
+    assert!(items.is_empty());
   }
 }
