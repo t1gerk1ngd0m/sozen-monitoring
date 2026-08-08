@@ -10,7 +10,6 @@ import { RustFunction } from "cargo-lambda-cdk";
 
 export interface MonitoringStackProps extends cdk.StackProps {
   targetUrl: string;
-  emailFrom: string;
   emailTo: string;
   userAgent: string;
   webhookParamName: string;
@@ -29,7 +28,6 @@ export class MonitoringStack extends cdk.Stack {
       logRetention: logs.RetentionDays.ONE_WEEK,
       environment: {
         TARGET_URL: props.targetUrl,
-        EMAIL_FROM: props.emailFrom,
         EMAIL_TO: props.emailTo,
         USER_AGENT: props.userAgent,
         WEBHOOK_PARAM_NAME: props.webhookParamName,
@@ -41,7 +39,9 @@ export class MonitoringStack extends cdk.Stack {
     fn.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["ses:SendEmail"],
-        resources: [`arn:aws:ses:${this.region}:${this.account}:identity/${props.emailFrom}`],
+        resources: props.emailTo
+          .split(",")
+          .map((a) => `arn:aws:ses:${this.region}:${this.account}:identity/${a.trim()}`),
       }),
     );
 

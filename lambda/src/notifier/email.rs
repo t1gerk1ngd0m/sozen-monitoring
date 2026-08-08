@@ -23,16 +23,18 @@ pub async fn send_email(
 
   let body = Body::builder().text(body_text).build();
   let message = Message::builder().subject(subject).body(body).build();
-  let dest = Destination::builder().to_addresses(&cfg.email_to).build();
 
-  ses
-    .send_email()
-    .from_email_address(&cfg.email_from)
-    .destination(dest)
-    .content(EmailContent::builder().simple(message).build())
-    .send()
-    .await
-    .context("SES SendEmail failed")?;
+  for addr in &cfg.email_to {
+    let dest = Destination::builder().to_addresses(addr).build();
+    ses
+      .send_email()
+      .from_email_address(addr)
+      .destination(dest)
+      .content(EmailContent::builder().simple(message.clone()).build())
+      .send()
+      .await
+      .with_context(|| format!("SES SendEmail to {addr} failed"))?;
+  }
   Ok(())
 }
 

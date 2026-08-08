@@ -15,7 +15,6 @@ const requireEnv = (name: string): string => {
   return v;
 };
 
-const emailFrom = requireEnv("EMAIL_FROM");
 const emailTo = requireEnv("EMAIL_TO");
 
 const app = new cdk.App();
@@ -25,7 +24,6 @@ new MonitoringStack(app, "SozenMonitoringStack", {
     region: "ap-northeast-1",
   },
   targetUrl: "https://reserva.be/sugamo401",
-  emailFrom,
   emailTo,
   userAgent: "sozen-monitor/0.1 (+contact: )",
   webhookParamName: "/sozen-monitor/webhooks",

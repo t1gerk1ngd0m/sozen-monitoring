@@ -4,8 +4,7 @@ use serde::Deserialize;
 #[derive(Debug, Clone)]
 pub struct Config {
   pub target_url: String,
-  pub email_from: String,
-  pub email_to: String,
+  pub email_to: Vec<String>,
   pub user_agent: String,
   pub availability_threshold: usize,
   pub discord_webhook_url: Option<String>,
@@ -31,8 +30,11 @@ impl Config {
 
     Ok(Self {
       target_url: Self::env_var("TARGET_URL")?,
-      email_from: Self::env_var("EMAIL_FROM")?,
-      email_to: Self::env_var("EMAIL_TO")?,
+      email_to: Self::env_var("EMAIL_TO")?
+        .split(',')
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+        .collect(),
       user_agent: Self::env_var("USER_AGENT")?,
       availability_threshold,
       discord_webhook_url: webhooks.discord,
