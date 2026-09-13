@@ -2,21 +2,21 @@ use anyhow::{Context, Result};
 use aws_sdk_sesv2::types::{Body, Content, Destination, EmailContent, Message};
 
 use crate::config::Config;
-use crate::model::MenuItem;
+use crate::model::AvailableDay;
 
 pub async fn send_email(
   ses: &aws_sdk_sesv2::Client,
   cfg: &Config,
-  items: &[MenuItem],
+  days: &[AvailableDay],
 ) -> Result<()> {
   let subject = Content::builder()
-    .data(format!("[sozen-monitor] そうぜん先生の予約枠あり"))
+    .data("[sozen-monitor] そうぜん先生の予約枠あり".to_string())
     .charset("UTF-8")
     .build()
     .context("build subject")?;
 
   let body_text = Content::builder()
-    .data(render_text(items))
+    .data(render_text(days, &cfg.target_url))
     .charset("UTF-8")
     .build()
     .context("build body text")?;
@@ -38,11 +38,11 @@ pub async fn send_email(
   Ok(())
 }
 
-fn render_text(items: &[MenuItem]) -> String {
-  let mut s = String::from("以下のメニューが表示されています:\n\n");
-  for item in items {
-    s.push_str(&format!("- {}\n", item.title));
+fn render_text(days: &[AvailableDay], url: &str) -> String {
+  let mut s = String::from("院長担当メニューに予約可能な日があります:\n\n");
+  for day in days {
+    s.push_str(&format!("- {}\n", day.date));
   }
-  s.push_str("\nhttps://reserva.be/sugamo401\n");
+  s.push_str(&format!("\n{url}\n"));
   s
 }

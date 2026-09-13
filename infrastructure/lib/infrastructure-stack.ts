@@ -13,7 +13,6 @@ export interface MonitoringStackProps extends cdk.StackProps {
   emailTo: string;
   userAgent: string;
   webhookParamName: string;
-  availabilityThreshold: string;
 }
 
 export class MonitoringStack extends cdk.Stack {
@@ -31,7 +30,6 @@ export class MonitoringStack extends cdk.Stack {
         EMAIL_TO: props.emailTo,
         USER_AGENT: props.userAgent,
         WEBHOOK_PARAM_NAME: props.webhookParamName,
-        AVAILABILITY_THRESHOLD: props.availabilityThreshold,
         RUST_LOG: "info",
       },
     });

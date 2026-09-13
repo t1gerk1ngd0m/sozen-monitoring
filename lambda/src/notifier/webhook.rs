@@ -1,7 +1,7 @@
 use anyhow::{Context, Result};
 use serde::Serialize;
 
-use crate::model::MenuItem;
+use crate::model::AvailableDay;
 
 #[derive(Serialize)]
 struct DiscordPayload<'a> {
@@ -13,8 +13,13 @@ struct SlackPayload<'a> {
   text: &'a str,
 }
 
-pub async fn post_discord(client: &wreq::Client, url: &str, items: &[MenuItem]) -> Result<()> {
-  let text = render(items);
+pub async fn post_discord(
+  client: &wreq::Client,
+  url: &str,
+  days: &[AvailableDay],
+  target_url: &str,
+) -> Result<()> {
+  let text = render(days, target_url);
   client
     .post(url)
     .json(&DiscordPayload { content: &text })
@@ -26,8 +31,13 @@ pub async fn post_discord(client: &wreq::Client, url: &str, items: &[MenuItem]) 
   Ok(())
 }
 
-pub async fn post_slack(client: &wreq::Client, url: &str, items: &[MenuItem]) -> Result<()> {
-  let text = render(items);
+pub async fn post_slack(
+  client: &wreq::Client,
+  url: &str,
+  days: &[AvailableDay],
+  target_url: &str,
+) -> Result<()> {
+  let text = render(days, target_url);
   client
     .post(url)
     .json(&SlackPayload { text: &text })
@@ -39,11 +49,11 @@ pub async fn post_slack(client: &wreq::Client, url: &str, items: &[MenuItem]) ->
   Ok(())
 }
 
-fn render(items: &[MenuItem]) -> String {
-  let mut s = format!("[sozen-monitor] 予約可能枠あり ({} 件)\n", items.len());
-  for item in items {
-    s.push_str(&format!("- {}\n", item.title));
+fn render(days: &[AvailableDay], target_url: &str) -> String {
+  let mut s = format!("[sozen-monitor] 予約可能日あり ({} 日)\n", days.len());
+  for day in days {
+    s.push_str(&format!("- {}\n", day.date));
   }
-  s.push_str("https://reserva.be/sugamo401");
+  s.push_str(target_url);
   s
 }

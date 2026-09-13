@@ -23,9 +23,9 @@ new MonitoringStack(app, "SozenMonitoringStack", {
     account: process.env.CDK_DEFAULT_ACCOUNT,
     region: "ap-northeast-1",
   },
-  targetUrl: "https://reserva.be/sugamo401",
+  targetUrl:
+    "https://reserva.be/sugamo401/reserve?mode=service_staff&search_evt_no=b3eJwzN7YEAAFHAKQ",
   emailTo,
   userAgent: "sozen-monitor/0.1 (+contact: )",
   webhookParamName: "/sozen-monitor/webhooks",
-  availabilityThreshold: process.env.AVAILABILITY_THRESHOLD ?? "2",
 });

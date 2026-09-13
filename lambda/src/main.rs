@@ -33,12 +33,22 @@ async fn main() -> Result<(), Error> {
   let ssm = aws_sdk_ssm::Client::new(&aws_cfg);
   let cfg = Config::load(&ssm).await.context("load config")?;
 
+  // cf_clearance は Cookie ヘッダー直指定だと cookie jar のセッション Cookie
+  // （ページ GET → AjaxSearch POST で必要）を潰すため、jar に入れる
+  let jar = std::sync::Arc::new(wreq::cookie::Jar::default());
+  if let Some(clearance) = &cfg.cf_clearance {
+    jar.add(
+      format!("cf_clearance={clearance}; Path=/").as_str(),
+      cfg.target_url.as_str(),
+    );
+  }
+
   let deps = Deps {
     http: wreq::Client::builder()
       .emulation(wreq_util::Emulation::Chrome137)
       .connect_timeout(Duration::from_secs(5))
       .timeout(Duration::from_secs(15))
-      .cookie_store(true)
+      .cookie_provider(jar)
       .build()
       .context("build rquest client")?,
     ses: aws_sdk_sesv2::Client::new(&aws_cfg),
